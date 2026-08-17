@@ -1,0 +1,12 @@
+---
+description: Close backlog cards when the referenced work is finished
+alwaysApply: true
+---
+
+# Backlog cards
+
+- Open backlog items live in `docs/backlog/open/`. They are not canon; do not treat them as product source of truth until written into the canon doc (`GDD.md`, `SPEC.md`, `docs/canon.md`, or whatever this repo uses).
+- When the user `@`-mentions a backlog card (or clearly identifies one) and the work for that item is finished, move the file from `docs/backlog/open/` to `docs/backlog/done/`, set Status to `done`, and update the canon doc only if the user asked or the design became canonical. If other open cards still share that card’s **Ship on**, do not merge the branch to `main`.
+- Capture new items with `/backlog`; do not implement when only capturing. New cards include Size (`small` | `large`), Layer (`foundation` | `core loop` | `depth` | `presentation` | `spice`), Depends on (`—` or open kebab slugs), and Ship on (`—` or a shared kebab when parking split slices of one v1). If the chat already locked a v1, put those locks under **Decisions**; omit that heading on thin sparks. Stamp Ship on only; do not create a git branch from `/backlog`.
+- Sharpen a design in chat with `/grill-me` (no files) then `/backlog`, or refine a parked card with `/backlog-refine` (grilling allowed). Status stays `open`; do not implement or edit the canon doc unless the user asks. Splits get the same **Ship on** kebab so they share one later branch. Optional: `/research` parks a non-canon dossier in `docs/research/` (Notes link only); do not copy it into Decisions until `/backlog-refine`.
+- Start work on an open card with `/backlog-work` (list + pick, or use an `@`-mentioned card). If the current git branch is `backlog/<ship-on>` and open cards still share that Ship on, only offer those remaining cards (plus an escape). After pick, choose checkout: **Branch here** (default) or **Worktree** for a *different* train — skip checkout when already on the train. Size only changes planning depth (light vs thorough), not the workflow. Layer, Depends on, and Ship on inform pick order; they are not extra folders or priority scores. Treat **Decisions** as locked; ask leftover **Open questions**; do not re-grill locks unless the user reopens them. Merge a train to `main` only after its last sibling is `done/`, and only if the user asks.
