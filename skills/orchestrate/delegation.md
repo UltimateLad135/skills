@@ -44,7 +44,7 @@ Each advisor round is a new `delegate_task` call with its own `clientRequestId`.
 
 ## Guard
 
-Plan mode keeps some providers read-only and not others, so the guard is a check rather than a permission. Record `git status --porcelain` of the integration checkout before dispatching, and compare it after each child reports:
+Plan mode keeps some providers read-only and not others, so the guard is a check rather than a permission. Record `git status --porcelain` of the integration checkout (the current checkout for a report-only run) before dispatching, and compare it after each child reports:
 
 - **Read-only roles** leave every checkout unchanged.
 - **Workers** change only their own worktree.
@@ -56,8 +56,10 @@ A difference is a violation. Leave the changes in place, record them in the ledg
 The orchestrator creates every worker's worktree before dispatch, inside the run folder:
 
 ```
-git worktree add <run-folder>/worktrees/<task-id> -b orchestrate/<slug>/<task-id> <integration tip>
+git worktree add <run-folder>/worktrees/<task-id> -b orchestrate/<slug>--<task-id> <integration tip>
 ```
+
+Keep task branches beside the integration branch `orchestrate/<slug>`, not beneath it: Git cannot store that branch and `orchestrate/<slug>/<task-id>` together.
 
 A fresh worktree lacks ignored files such as `.env` and installed dependencies. Prepare it the way the repo's own docs describe (README, `AGENTS.md`, `CLAUDE.md`, contributing guide). When they say nothing, ask the user once how to prepare a worktree for this repo, and save the answer in `~/.orchestrate/repos/<repo>.md` for later runs. Keep secrets out of briefs, reports and commits.
 
@@ -65,7 +67,9 @@ Remove a worktree once its branch is merged into the integration branch and its 
 
 ## Ledger
 
-`ledger.md` in the run folder is the run's state, so an interrupted run can resume from it. One row per dispatch:
+`ledger.md` in the run folder is the run's state, so an interrupted run can resume from it. Record the run's delivery choice, starting branch and commit, push remote, target repository, base branch, review base commit and integration branch where applicable. Keep its PR URL, head commit, draft/ready state and known hosted CI status there too, along with any publishing blocker or reason for skipping the PR. Reconcile these with the host when resuming, and reuse the run's open PR. When a wrapped skill owns the ledger, put this information in that ledger instead.
+
+One row per dispatch:
 
 | Task | Role | Model | State | Worktree / branch | taskId | Commit | Evidence |
 |---|---|---|---|---|---|---|---|

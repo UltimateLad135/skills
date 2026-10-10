@@ -59,7 +59,17 @@ Then show the confirm screen.
 
 ## Screen 3: confirm
 
-Show the goal card and a team table with every resolved model, including how typed text was matched (`opus high → Claude Opus 5.5 · high`). Add a warning line when:
+Before this screen, look for an earlier run of this goal under `~/.orchestrate/runs/<repo>/` or on an `orchestrate/<slug>` branch. If one exists, settle whether to resume it and prefill its recorded delivery and starting point. Honor a resume decision already made in this conversation.
+
+For a new run, first determine whether the goal or wrapped workflow is expected to change the repository. A read-only run uses report-only delivery and stays on the current checkout. Otherwise resolve the PR target from the user's instructions, wrapped skill or repository conventions; fall back to the target repository's default branch. Resolve the push remote separately when using a fork. Do not assume that a feature branch's upstream is the intended PR base. Check the available publishing route and access, and show any known blocker; ask about a target only when it is ambiguous. Settle any wrapped-skill publishing conflict here.
+
+Keep the current `HEAD` as the proposed starting point unless the user or wrapped workflow chose another. Refresh the target base when available and compare it with that starting point. If the starting point has commits beyond the target base, show them and settle whether to include them, stack the PR on that branch with a different base, or start fresh from the target base. Offer stacking only when its base branch already exists on the target remote. Honor an existing decision on those commits instead of asking again.
+
+Show the goal card and a team table with every resolved model, including how typed text was matched (`opus high → Claude Opus 5.5 · high`). Add a delivery line:
+
+`Delivery: PR from <push remote>:<integration branch> into <target repository>:<base branch>; merging is yours.`
+
+Also show the starting branch and commit. For a local-only run, show that choice instead of a PR; for a read-only run, show `Delivery: report on the current checkout; no branch or push.` Explain that **Start** with PR delivery includes pushing the run's branch and creating or updating its PR after verification and review; do not ask for that permission again at handoff. A run without repository changes reports its result without a PR. Add a warning line when:
 
 - the advisor and the workers share a family: the code review is less independent;
 - the advisor runs the orchestrator's model: the plan review shares its blind spots;
@@ -69,7 +79,7 @@ Options:
 
 - **Start**
 - **Change roles**: go to screen 2, prefilled with this team.
-- **Change goal**: the user corrects the goal card in a sentence; show this screen again.
+- **Change goal**: the user corrects the goal card or delivery (such as a different PR base or "local-only") in a sentence; show this screen again.
 - **Save as team**: ask for a name, save, then start.
 
 Once the user chooses **Start** or **Save as team**, record the team as the last used and continue with step 5.
