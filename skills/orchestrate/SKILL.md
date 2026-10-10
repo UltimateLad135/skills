@@ -56,9 +56,10 @@ Follow [team-selection.md](team-selection.md). This step is done when the user h
 
 ## 5. Prepare the run
 
-1. When the checkout has uncommitted changes, show them and ask how to proceed.
-2. Create the **run folder** `~/.orchestrate/runs/<repo>/<run-id>/` (run id: date plus a short slug). Write `goal.md` (the goal card), `team.md` and an empty `ledger.md`.
-3. Create the **integration branch** `orchestrate/<slug>` from the current `HEAD` and switch to it, unless a wrapped skill prescribes its own branch. Record the base commit in the ledger.
+1. Look for an earlier run of this goal: a folder under `~/.orchestrate/runs/<repo>/` or an `orchestrate/<slug>` branch. When one exists, ask whether to **resume** it. A resumed run reuses its run folder, branch and ledger. Before dispatching anything, reconcile the ledger: call `task_status` for every `running` row and read the commits on each task branch and the integration branch. Where the ledger and the commits disagree, the commits win. Then continue at the first unfinished step.
+2. When the checkout has uncommitted changes, show them and ask how to proceed.
+3. Create the **run folder** `~/.orchestrate/runs/<repo>/<run-id>/` (run id: date plus a short slug). Write `goal.md` (the goal card), `team.md` and an empty `ledger.md`.
+4. Create the **integration branch** `orchestrate/<slug>` from the current `HEAD` and switch to it, unless a wrapped skill prescribes its own branch. Record the base commit in the ledger.
 
 ## 6. Explore and research
 
@@ -66,7 +67,13 @@ Dispatch explorers for every codebase question the plan depends on, and research
 
 ## 7. Plan
 
-Write `plan.md` in the run folder. Each task has an id, owned files, files it must leave alone, done-when conditions, verification commands, dependencies, and pointers to relevant maps and research. Split the work into as many tasks as it naturally has. Tasks that would edit the same files run serially, or the shared part becomes its own earlier task. State the headcount and why.
+Write `plan.md` in the run folder. Each task has an id, owned files, files it must leave alone, shared resources, done-when conditions, verification commands, dependencies, and pointers to relevant maps and research. Split the work into as many tasks as it naturally has, and map every done-when on the goal card to at least one task. State the headcount and why.
+
+Worktrees isolate files, not everything parallel tasks can collide on. Settle each collision in the plan:
+
+- **Shared files**, including one registry, lockfile or generated file that several tasks append to or regenerate: run those tasks serially, make the shared part its own earlier task, or write the exact interface (types, signatures, file ownership) into the plan so both tasks build against it in parallel.
+- **Ordered artifacts**, such as migration numbers: assign them in the plan.
+- **Shared resources** that verification uses, such as a local database, containers or fixed ports: you own them. Tasks that use the same resource run serially, or their workers leave that check to you and you run it during integration.
 
 ## 8. Plan review
 
@@ -82,11 +89,12 @@ After changes, the advisor checks only those changes. A **small** task skips pla
 
 1. For every task whose dependencies have landed, create its worktree and dispatch a worker ([roles/worker.md](roles/worker.md)).
 2. End your turn while workers run; their completion notifications wake you.
-3. On each report: check the hub guard ([delegation.md](delegation.md#guard)), check the evidence against the task's done-when, then merge the worker branch into the integration branch, resolving conflicts and rerunning affected checks. Mark the task **landed** and dispatch the tasks it unblocked.
+3. On each report: check the hub guard ([delegation.md](delegation.md#guard)), check the evidence against the task's done-when, then merge the worker branch into the integration branch, resolving conflicts and rerunning affected checks. Run every required check the worker skipped or left to you there as well. Mark the task **landed** once its required checks pass on the integration branch, and dispatch the tasks it unblocked. Until then it stays `awaiting-verification`, and its dependents wait.
 4. A worker that reports a missing decision: ask the user, and keep unrelated tasks moving.
-5. A worker that fails: re-brief once with the failure. A second failure, or conflicting worker reports, goes to the advisor as a consult.
+5. A worker that fails: re-brief once with the failure. A second failure, or conflicting worker reports, goes to the advisor as a consult. A task that stays failed or blocked holds its dependents; unrelated tasks keep moving.
+6. When tasks remain but none is running and none can start, the build has **stalled**: report each waiting task with the dependency, decision or cycle it waits on, and keep the ledger for a resumed run.
 
-The step is done when every task has landed, or the remaining ones are blocked on the user.
+The step is done when every task has landed, or the build has stalled and been reported.
 
 ## 10. Verify
 
@@ -106,7 +114,7 @@ Report to the user:
 - verification evidence, and anything outstanding;
 - the integration branch.
 
-Remove the worktrees this run created once their work is integrated and clean. Push or open a PR only when the user asks.
+Remove the worktrees this run created once their work is integrated and clean. Keep the others (failed, blocked, or with uncommitted work) for inspection and list them in the report. Push or open a PR only when the user asks.
 
 ## Wrapped skills
 
@@ -120,4 +128,4 @@ Remove the worktrees this run created once their work is integrated and clean. P
 | outside facts, docs, comparisons | Researcher |
 | planning, integrating, reporting | You |
 
-Keep the wrapped skill's own rules: branching, tests, commits, review protocol and anything it requires in the report. Apply [delegation.md](delegation.md) to every dispatch. When one of its instructions conflicts with running as a team (for example, "start in a fresh chat"), tell the user and follow their call.
+Keep the wrapped skill's own rules: branching, tests, commits, review protocol and anything it requires in the report. When it keeps its own ledger, that is the run's only ledger: write its path in `ledger.md` and keep the run's state only in the wrapped skill's ledger. Apply [delegation.md](delegation.md) to every dispatch. When one of its instructions conflicts with running as a team (for example, "start in a fresh chat"), tell the user and follow their call.

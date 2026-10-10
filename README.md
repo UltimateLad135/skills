@@ -46,7 +46,7 @@ After brainstorming an idea in a chat, invoke `/orchestrate` in the same chat: i
 8. **Code review** by the advisor; workers fix the accepted findings; the advisor checks the fixes.
 9. **Report**. Pushing and PRs happen only when you ask.
 
-Saved teams live in `~/.orchestrate/teams.json`; each run's goal, plan, ledger, reports and worktrees live in `~/.orchestrate/runs/<repo>/<run-id>/`, outside your repo.
+Saved teams live in `~/.orchestrate/teams.json`; each run's goal, plan, ledger, reports and worktrees live in `~/.orchestrate/runs/<repo>/<run-id>/`, outside your repo. Invoking `/orchestrate` again with the same goal offers to resume an interrupted run from its ledger.
 
 ## License
 

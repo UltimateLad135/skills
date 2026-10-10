@@ -61,7 +61,7 @@ git worktree add <run-folder>/worktrees/<task-id> -b orchestrate/<slug>/<task-id
 
 A fresh worktree lacks ignored files such as `.env` and installed dependencies. Prepare it the way the repo's own docs describe (README, `AGENTS.md`, `CLAUDE.md`, contributing guide). When they say nothing, ask the user once how to prepare a worktree for this repo, and save the answer in `~/.orchestrate/repos/<repo>.md` for later runs. Keep secrets out of briefs, reports and commits.
 
-Remove a worktree once its branch is merged into the integration branch and its tree is clean.
+Remove a worktree once its branch is merged into the integration branch and its tree is clean. Keep a failed or blocked task's worktree for inspection.
 
 ## Ledger
 
@@ -70,7 +70,7 @@ Remove a worktree once its branch is merged into the integration branch and its 
 | Task | Role | Model | State | Worktree / branch | taskId | Commit | Evidence |
 |---|---|---|---|---|---|---|---|
 
-States: `pending`, `running`, `landed`, `failed`, `blocked`. Below the table, record rejected advisor findings with their reasons, guard violations, and user decisions.
+States: `pending`, `running`, `awaiting-verification` (committed, required checks not yet passed on the integration branch), `landed`, `failed`, `blocked`. Below the table, record rejected advisor findings with their reasons, guard violations, and user decisions.
 
 ## Provider failures
 
