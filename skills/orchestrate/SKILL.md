@@ -8,12 +8,12 @@ disable-model-invocation: true
 
 You are the **orchestrator**. You turn a goal into a plan, give each piece to a team role, integrate the results and hand off a PR for the user to review. The team runs as T3 Code app-owned subagents, so every role can use a different provider and model. Merging the PR is the user's decision.
 
-| Role | Does | Definition |
-|---|---|---|
-| Advisor | Independent review of the plan and of the integrated code | [roles/advisor.md](roles/advisor.md) |
-| Worker | Implements one bounded task in its own worktree | [roles/worker.md](roles/worker.md) |
-| Explorer | Answers questions about this codebase, read-only | [roles/explorer.md](roles/explorer.md) |
-| Researcher | Answers questions about the outside world, read-only | [roles/researcher.md](roles/researcher.md) |
+| Role       | Does                                                      | Definition                                 |
+| ---------- | --------------------------------------------------------- | ------------------------------------------ |
+| Advisor    | Independent review of the plan and of the integrated code | [roles/advisor.md](roles/advisor.md)       |
+| Worker     | Implements one bounded task in its own worktree           | [roles/worker.md](roles/worker.md)         |
+| Explorer   | Answers questions about this codebase, read-only          | [roles/explorer.md](roles/explorer.md)     |
+| Researcher | Answers questions about the outside world, read-only      | [roles/researcher.md](roles/researcher.md) |
 
 Read a role's definition before writing its first brief. Read [delegation.md](delegation.md) before the first dispatch; it covers how to call, track and check subagents.
 
@@ -67,7 +67,7 @@ Dispatch explorers for every codebase question the plan depends on, and research
 
 ## 7. Plan
 
-Write `plan.md` in the run folder. Each task has an id, owned files, files it must leave alone, shared resources, done-when conditions, verification commands, dependencies, and pointers to relevant maps and research. Split the work into as many tasks as it naturally has, and map every done-when on the goal card to at least one task. State the headcount and why.
+Write `plan.md` in the run folder. Each task has an id, owned files, files it must leave alone, shared resources, done-when conditions, verification commands, dependencies, and pointers to relevant maps and research. Split the work into as many tasks as it naturally has, and map every done-when on the goal card to at least one task. State the headcount and why. Name the final gate command and its owner, schedule it after review fixes, and distinguish it from workers' focused checks. Protect the active integration checkout from host cleanup; record any worktree lock this run adds so it can be released at handoff.
 
 Worktrees isolate files, not everything parallel tasks can collide on. Settle each collision in the plan:
 
@@ -83,7 +83,7 @@ Send the goal card and plan to the advisor ([roles/advisor.md](roles/advisor.md)
 - **Reject**: record the reason in the ledger; it appears in the final report.
 - **Stop verdict, or a finding that needs a product decision**: put it to the user before building.
 
-After changes, the advisor checks only those changes. A **small** task skips plan review unless it touches security, money, data loss or another irreversible path.
+After changes, the advisor checks only those changes. Review **medium**, **large** and sensitive tasks before building. A **small** task skips plan review when its scope and verification are settled; record the reason in the plan. Sensitive work includes security, money behavior, data loss, irreversible paths, and changes to the meaning of prices, tax statements or contractual terms. Restating already-approved facts without changing their meaning can use the small-task exception.
 
 ## 9. Build
 
@@ -98,15 +98,17 @@ The step is done when every task has landed. A stalled run stops here and resume
 
 ## 10. Verify
 
-Run the repo's full checks once on the integration branch. Failures go to workers as fix tasks. Done when the checks pass, or the remaining failures are reported as outstanding.
+Run the affected checks on the integration branch and retain evidence for code review. Workers supply focused evidence; the hub owns the final gate. Failures go to workers as fix tasks. Done when affected checks pass, or the remaining failures are reported as outstanding. The complete repository gate follows review fixes in step 12; a required pre-push gate supplies that run rather than duplicating it here.
 
 ## 11. Code review
 
-Send the integrated diff against the base commit, the goal card, the plan and the verification evidence to the advisor. Triage as in step 8. Accepted fixes go to workers, split across several when there are many; one-line fixes you make yourself. Integrate and rerun the affected checks, then send only those fixes to the advisor for a follow-up check. When the follow-up still finds serious problems, stop and ask the user.
+Send the integrated diff against the base commit, the goal card, the plan and the focused verification evidence to the advisor, identifying the pending final gate. Triage as in step 8. Accepted fixes go to workers, split across several when there are many; one-line fixes you make yourself. Integrate and rerun the affected checks, then send only those fixes to the advisor for a follow-up check. When the follow-up still finds serious problems, stop and ask the user.
 
 ## 12. Hand off as a PR
 
 Enter this step after verification and advisor review, or the wrapped workflow's required checks and reviews. A run awaiting a user decision at a stop verdict, missing decision or stalled build stays stopped; create a draft during that stop only if the user asks. A final handoff with outstanding checks or other unfinished work is a draft, not a claim that the goal is complete.
+
+After review fixes are committed, run the complete repository gate once on a stable checkout. For PR delivery, use the mandatory pre-push hook when it provides that gate; otherwise run the prescribed gate before pushing. For local-only delivery, run it directly. Finish checkout writers and competing heavy local checks first; remote read-only advice need not block it. Keep the checkout unchanged until the gate ends. Record the reviewed and verified commits and report phase/elapsed progress during long checks or shared-resource waits. A changed checkout invalidates the run. Gate failures go back through affected fixes and review before a fresh final gate; one successful gate is the target, not a limit on repairing failures.
 
 For a run with repository changes and confirmed PR delivery:
 
@@ -126,19 +128,19 @@ Lead the report with the PR link and whether it is ready or draft, or the reason
 - verification evidence, and anything outstanding;
 - the integration branch.
 
-Remove the worktrees this run created once their work is integrated and clean. Keep the others (failed, blocked, or with uncommitted work) for inspection and list them in the report.
+Remove only worker worktrees this run created once their work is integrated and clean. Preserve the active integration checkout for the user's review. Release only locks this run added when their checkout no longer needs protection; retained active or blocked worktrees stay protected and are listed in the report.
 
 ## Wrapped skills
 
-`/orchestrate /<skill> <args>` runs the other skill's process with this team. Steps 1 to 5 still apply. The wrapped skill decides **what** happens and in which order, replacing steps 6 to 11; this skill decides **who** does it. Apply the PR handoff in step 12 after the wrapped workflow finishes. Whenever the wrapped skill (or a skill it loads) calls for a subagent, choose the role by purpose:
+`/orchestrate /<skill> <args>` runs the other skill's process with this team. Steps 1 to 5 still apply. The wrapped skill decides **what** happens and in which order, replacing steps 6 to 11; this skill decides **who** does it. Preserve step 7's ownership, shared-resource and final-gate plan and step 8's conditional plan review before implementation, even when the wrapped workflow omits them. Consolidate an equivalent wrapped review rather than adding a duplicate. Apply step 12's single final gate and handoff after the wrapped workflow finishes. Whenever the wrapped skill (or a skill it loads) calls for a subagent, choose the role by purpose:
 
-| The workflow asks for | Role |
-|---|---|
-| implementing, fixing, a merge-conflict helper | Worker |
-| a review, second opinion, standards or spec check | Advisor |
-| finding code, locating examples or prior art | Explorer |
-| outside facts, docs, comparisons | Researcher |
-| planning, integrating, reporting | You |
+| The workflow asks for                             | Role       |
+| ------------------------------------------------- | ---------- |
+| implementing, fixing, a merge-conflict helper     | Worker     |
+| a review, second opinion, standards or spec check | Advisor    |
+| finding code, locating examples or prior art      | Explorer   |
+| outside facts, docs, comparisons                  | Researcher |
+| planning, integrating, reporting                  | You        |
 
 Keep the wrapped skill's own rules: branching, tests, commits, review protocol and anything it requires in the report. When it keeps its own ledger, that is the run's only ledger: write its path in `ledger.md` and keep the run's state only in the wrapped skill's ledger. Apply [delegation.md](delegation.md) to every dispatch. When one of its instructions conflicts with running as a team (for example, "start in a fresh chat"), tell the user and follow their call.
 

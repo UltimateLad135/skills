@@ -40,11 +40,11 @@ After brainstorming an idea in a chat, invoke `/orchestrate` in the same chat: i
 2. **Difficulty**: small, medium or large, with the expected headcount.
 3. **Team and delivery**: pick a saved team or preset, adjust any role by picking a suggestion or typing a model, then confirm the goal card, team, starting point and PR target together. You can choose a local-only handoff instead.
 4. **Explore and research** as needed.
-5. **Plan**, reviewed by the advisor.
+5. **Plan**, reviewed by the advisor for medium, large or sensitive work; settled small tasks record why review is unnecessary.
 6. **Build**: workers run in parallel in their own worktrees; the orchestrator merges onto an `orchestrate/<slug>` branch.
-7. **Verify** the integrated result with the repo's checks.
+7. **Verify** the integrated result with focused checks for review.
 8. **Code review** by the advisor; workers fix the accepted findings; the advisor checks the fixes.
-9. **PR handoff**: push the integration branch and create or update one PR for you to review, ready when the goal conditions, checks and advisor review are satisfied, or a draft with outstanding items listed. The report leads with its link. Merging is yours.
+9. **Final gate and PR handoff**: after review fixes are committed, run the complete gate once on an unchanged checkout (through the mandatory pre-push hook when provided), then create or update one PR for you to review. It is ready when the goal conditions, checks and advisor review are satisfied, or a draft with outstanding items listed. The report leads with its link. Merging is yours.
 
 A paused run waits for its unresolved decision or blocker; it publishes a draft during that stop only when you ask. Resuming reuses the run's open PR. Read-only runs stay on the current checkout and create no integration branch. A wrapped skill's existing PR is adopted, and a run with no repository changes produces a report without an empty PR. If publishing fails, the report explains the blocker and preserves the branch and prepared PR description in the run folder's `pr.md`.
 
