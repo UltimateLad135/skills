@@ -1,61 +1,53 @@
 # Agent skills
 
-Slash-invoked Cursor skills for parking ideas, grilling a v1, researching evidence, and shipping from a markdown backlog.
+## `/orchestrate`
 
-They are project-agnostic. Drop them into any repo that wants a thin `docs/backlog/` instead of a kanban board.
+Run a task with a team you assemble yourself, each role on the model you choose.
 
-## Workflow
+| Role | Does |
+|---|---|
+| **Orchestrator** | The agent you are talking to. Plans, hands out work, integrates, reports. |
+| **Advisor** | Independent review of the plan and of the finished code. Advises; never edits. |
+| **Workers** | Implement the tasks, each in its own git worktree, as many in parallel as the plan allows. |
+| **Explorers** | Map the codebase, read-only, fast and cheap. |
+| **Researchers** | Answer outside questions with dated sources, only when needed. |
 
-```text
-spark ──► /backlog (thin card)
-              │
-idea ──► /grill-me ──► /backlog (thick card, Decisions filled)
-              │
-              ├─ optional /research   (prompt out → paste in → dossier)
-              ├─ optional /backlog-refine
-              └─ later /backlog-work  (branch or worktree → implement → done/)
+Mix providers freely: a Claude orchestrator, a GPT advisor, Grok workers and Gemini explorers is a valid team.
 
-occasional /pulse  (read-only architecture health check)
-```
+### Requirements
 
-| Skill | Purpose |
-|-------|---------|
-| [`/grill-me`](.cursor/skills/grill-me/SKILL.md) | One hard question at a time until a v1 is locked. No files. |
-| [`/backlog`](.cursor/skills/backlog/SKILL.md) | Park a card in `docs/backlog/open/`. Do not implement. |
-| [`/research`](.cursor/skills/research/SKILL.md) | External research prompt, then a non-canon dossier. |
-| [`/backlog-refine`](.cursor/skills/backlog-refine/SKILL.md) | Groom or split an open card. Still no code. |
-| [`/backlog-work`](.cursor/skills/backlog-work/SKILL.md) | Pick a card, checkout, plan, implement, move to `done/`. |
-| [`/pulse`](.cursor/skills/pulse/SKILL.md) | Named-home / spaghetti scan from git history. |
+T3 Code with orchestration (app-owned subagents) and at least one provider able to run child tasks. Outside T3 Code the skill says so and stops.
 
-All six set `disable-model-invocation: true`, so they run only when you type `/name` (or attach the skill). They do not auto-fire from chat.
-
-**Canon** means the project's design source of truth — `GDD.md`, `SPEC.md`, `docs/canon.md`, or whatever you already have. Backlog cards and research dossiers are not canon until you write them in.
-
-## Install
-
-From the project that should use these skills:
+### Install
 
 ```bash
-npx skills add UltimateLad135/skills --agent cursor
+npx skills add UltimateLad135/skills --skill orchestrate
 ```
 
-Or copy `.cursor/skills/*` into that project's `.cursor/skills/`.
+### Use
 
-Then copy the [templates](templates/README.md) into the project:
+```text
+/orchestrate                              describe the task when asked
+/orchestrate add CSV export to invoices   goal from the argument
+/orchestrate /implement 42                run another skill's workflow with your team
+```
 
-1. `templates/010-backlog-ideas.mdc` → `.cursor/rules/010-backlog-ideas.mdc`
-2. `templates/backlog-README.md` → `docs/backlog/README.md`
-3. Create `docs/backlog/open/`, `docs/backlog/done/`, and `docs/research/`
-4. Optional: `templates/pulse-hotspots.md` → `docs/pulse-hotspots.md`
+After brainstorming an idea in a chat, invoke `/orchestrate` in the same chat: it turns the conversation into a goal card instead of asking again.
 
-Restart or refresh Cursor so the skills show up under **Customize → Skills**. Invoke with `/grill-me`, `/backlog`, and so on.
+### How a run goes
 
-## Card shape
+1. **Goal card**: goal, decisions, out of scope, done when.
+2. **Difficulty**: small, medium or large, with the expected headcount.
+3. **Team**: pick a saved team or preset, adjust any role by picking a suggestion or typing a model, then confirm the goal card and team together.
+4. **Explore and research** as needed.
+5. **Plan**, reviewed by the advisor.
+6. **Build**: workers run in parallel in their own worktrees; the orchestrator merges onto an `orchestrate/<slug>` branch.
+7. **Verify** the integrated result with the repo's checks.
+8. **Code review** by the advisor; workers fix the accepted findings; the advisor checks the fixes.
+9. **Report**. Pushing and PRs happen only when you ask.
 
-One markdown file per item, kebab-case filename. Size is `small` or `large`. Layer is exactly one of `foundation` | `core loop` | `depth` | `presentation` | `spice`. **Ship on** groups split slices onto one `backlog/<kebab>` branch; `—` means a standalone card.
-
-See `templates/card-template.md` and `templates/backlog-README.md`.
+Saved teams live in `~/.orchestrate/teams.json`; each run's goal, plan, ledger, reports and worktrees live in `~/.orchestrate/runs/<repo>/<run-id>/`, outside your repo.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+See [LICENSE](LICENSE).
