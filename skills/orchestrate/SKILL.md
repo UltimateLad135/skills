@@ -1,12 +1,12 @@
 ---
 name: orchestrate
-description: Run a task with a team you assemble (advisor, workers, explorers, researchers), each on the model you choose. Optionally wraps another skill. Requires T3 Code orchestration.
+description: Run a task with a team you assemble (advisor, workers, explorers, researchers), each on the model you choose, and hand off repository changes as a PR for review. Optionally wraps another skill. Requires T3 Code orchestration.
 disable-model-invocation: true
 ---
 
 # Orchestrate
 
-You are the **orchestrator**. You turn a goal into a plan, give each piece to a team role, integrate the results and report. The team runs as T3 Code app-owned subagents, so every role can use a different provider and model.
+You are the **orchestrator**. You turn a goal into a plan, give each piece to a team role, integrate the results and hand off a PR for the user to review. The team runs as T3 Code app-owned subagents, so every role can use a different provider and model. Merging the PR is the user's decision.
 
 | Role | Does | Definition |
 |---|---|---|
@@ -52,14 +52,14 @@ Expected:   ~3 workers in parallel, 2 explorers, 0 researchers.
 
 ## 4. Assemble the team
 
-Follow [team-selection.md](team-selection.md). This step is done when the user has confirmed the goal card and the team on the confirm screen.
+Follow [team-selection.md](team-selection.md). This step is done when the user has confirmed the goal card, team and delivery on the confirm screen. A run that changes the repository ends with a PR by default; the user can choose a local-only handoff.
 
 ## 5. Prepare the run
 
-1. Look for an earlier run of this goal: a folder under `~/.orchestrate/runs/<repo>/` or an `orchestrate/<slug>` branch. When one exists, ask whether to **resume** it. A resumed run reuses its run folder, branch and ledger. Before dispatching anything, reconcile the ledger: call `task_status` for every `running` row and read the commits on each task branch and the integration branch. Where the ledger and the commits disagree, the commits win. Then continue at the first unfinished step.
+1. Use the new-run or resume choice settled before confirmation. A resumed run reuses its run folder, branch, ledger and open PR. Before dispatching anything, reconcile the ledger: call `task_status` for every `running` row, read the commits on each task branch and the integration branch, and check any recorded PR on its host. Link an existing PR to this T3 thread when starting work on it. Where the ledger and the commits or host state disagree, the observed state wins. Then continue at the first unfinished step without recreating the run's setup.
 2. When the checkout has uncommitted changes, show them and ask how to proceed.
 3. Create the **run folder** `~/.orchestrate/runs/<repo>/<run-id>/` (run id: date plus a short slug). Write `goal.md` (the goal card), `team.md` and an empty `ledger.md`.
-4. Create the **integration branch** `orchestrate/<slug>` from the current `HEAD` and switch to it, unless a wrapped skill prescribes its own branch. Record the base commit in the ledger.
+4. Record the confirmed delivery and starting point, plus the push remote, target repository and base branch when publishing. For a run expected to change the repository, create the **integration branch** `orchestrate/<slug>` from the confirmed starting point, unless a wrapped skill prescribes another branch, and switch to it. Preserve the current `HEAD` unless a different start was agreed. Record the starting commit separately from the **base commit** used for review: the refreshed target-base tip for PR delivery, or the starting commit for local-only delivery. This lets the advisor review any earlier commits explicitly included in the PR. If the target cannot be refreshed, use its last known tip or the starting commit for local review and record missing PR-base validation as a publishing blocker. A report-only run keeps the current checkout and creates no integration branch; if it turns out to need edits, settle the changed goal and delivery before dispatching a worker.
 
 ## 6. Explore and research
 
@@ -94,7 +94,7 @@ After changes, the advisor checks only those changes. A **small** task skips pla
 5. A worker that fails: re-brief once with the failure. A second failure, or conflicting worker reports, goes to the advisor as a consult. A task that stays failed or blocked holds its dependents; unrelated tasks keep moving.
 6. When tasks remain but none is running and none can start, the build has **stalled**: report each waiting task with the dependency, decision or cycle it waits on, and keep the ledger for a resumed run.
 
-The step is done when every task has landed, or the build has stalled and been reported.
+The step is done when every task has landed. A stalled run stops here and resumes when its blockers are resolved.
 
 ## 10. Verify
 
@@ -104,9 +104,21 @@ Run the repo's full checks once on the integration branch. Failures go to worker
 
 Send the integrated diff against the base commit, the goal card, the plan and the verification evidence to the advisor. Triage as in step 8. Accepted fixes go to workers, split across several when there are many; one-line fixes you make yourself. Integrate and rerun the affected checks, then send only those fixes to the advisor for a follow-up check. When the follow-up still finds serious problems, stop and ask the user.
 
-## 12. Report and clean up
+## 12. Hand off as a PR
 
-Report to the user:
+Enter this step after verification and advisor review, or the wrapped workflow's required checks and reviews. A run awaiting a user decision at a stop verdict, missing decision or stalled build stays stopped; create a draft during that stop only if the user asks. A final handoff with outstanding checks or other unfinished work is a draft, not a claim that the goal is complete.
+
+For a run with repository changes and confirmed PR delivery:
+
+1. Check that the intended changes are committed. Refresh the target base and inspect the prospective PR's diff and commits against it. The diff must match the work the advisor reviewed and contain no unrelated changes. A changed diff goes through the affected checks and advisor review before being marked ready, within the normal review-round limit.
+2. Look up the run's PR in its ledger, then on the host by head branch and repository if necessary. Reuse an open PR only when its head and target match the confirmed delivery. If an adopted or recorded PR differs, report the mismatch and settle the delivery using existing user decisions, asking only when those do not resolve it; never create a second PR for the same work. If a recorded PR is closed or merged, report that state and settle whether a new run is needed. Push only the integration branch to the confirmed push remote, using a normal fast-forward push. A remote branch with unrelated or divergent history needs resolution before publishing; do not force-push it.
+3. Prepare the PR title and body in `pr.md` in the run folder, following the repository's PR template. Describe the resulting behavior, goal conditions met or outstanding, verification evidence, material limitations, and rejected advisor findings with their reasons. Keep secrets and private run-folder paths out of the description. Create the PR or update the existing one using the draft/ready conditions below from the outset. Immediately call `link_pull_request` after creating a PR, or when starting work on an existing one, and record its URL in the run's ledger.
+4. Make the PR ready for review only when every goal condition is met, required local checks pass, required reviews are complete and no critical or major review finding remains unresolved. Otherwise create a draft or convert an existing ready PR back to draft, listing the outstanding items; settle any conflict with a wrapped skill's publishing rules rather than silently leaving it ready. On resume, update the same PR's description and promote it when those conditions are met. Report hosted CI separately: pending or unavailable is not passed, and a known failing required check or known merge conflict keeps the PR in draft. Inspect its available status once at handoff; monitor it only when the user asks.
+5. Record the PR's head commit, draft/ready state and known CI status in the ledger. Call `list_thread_pull_requests` and link any PR from this run that is missing before reporting the handoff. Leave merging to the user.
+
+When the user chose local-only delivery or the run produced no repository changes, skip publishing and say why. If publishing is unavailable or fails, keep the branch, save the prepared PR title and body in the run folder's `pr.md`, record the failed handoff and explain the concrete blocker with a pointer to that file in the report. Use an available host tool or CLI; a missing `gh` alone does not rule out another supported publishing route. Do not report PR delivery as complete without a PR URL.
+
+Lead the report with the PR link and whether it is ready or draft, or the reason no PR was delivered. Include:
 
 - what was built, against each done-when condition;
 - the team that ran;
@@ -114,11 +126,11 @@ Report to the user:
 - verification evidence, and anything outstanding;
 - the integration branch.
 
-Remove the worktrees this run created once their work is integrated and clean. Keep the others (failed, blocked, or with uncommitted work) for inspection and list them in the report. Push or open a PR only when the user asks.
+Remove the worktrees this run created once their work is integrated and clean. Keep the others (failed, blocked, or with uncommitted work) for inspection and list them in the report.
 
 ## Wrapped skills
 
-`/orchestrate /<skill> <args>` runs the other skill's process with this team. Steps 1 to 5 still apply. The wrapped skill decides **what** happens and in which order, replacing steps 6 to 12; this skill decides **who** does it. Whenever the wrapped skill (or a skill it loads) calls for a subagent, choose the role by purpose:
+`/orchestrate /<skill> <args>` runs the other skill's process with this team. Steps 1 to 5 still apply. The wrapped skill decides **what** happens and in which order, replacing steps 6 to 11; this skill decides **who** does it. Apply the PR handoff in step 12 after the wrapped workflow finishes. Whenever the wrapped skill (or a skill it loads) calls for a subagent, choose the role by purpose:
 
 | The workflow asks for | Role |
 |---|---|
@@ -129,3 +141,5 @@ Remove the worktrees this run created once their work is integrated and clean. K
 | planning, integrating, reporting | You |
 
 Keep the wrapped skill's own rules: branching, tests, commits, review protocol and anything it requires in the report. When it keeps its own ledger, that is the run's only ledger: write its path in `ledger.md` and keep the run's state only in the wrapped skill's ledger. Apply [delegation.md](delegation.md) to every dispatch. When one of its instructions conflicts with running as a team (for example, "start in a fresh chat"), tell the user and follow their call.
+
+Adopt and report any PR the wrapped skill already created instead of creating a duplicate; link it to T3 and record it in the run's actual ledger. When the wrapped workflow produces no repository changes, report its result without opening an empty PR. If its publishing rules conflict with the proposed delivery, settle that conflict with the user at confirmation, before dispatching work; honor an existing user decision rather than asking again.
