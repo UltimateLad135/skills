@@ -77,12 +77,12 @@ npx skills add UltimateLad135/skills --skill land
 ### How a run goes
 
 1. **Rules**: the base branch, the gate and whether a pre-push hook runs it, merge preconditions such as preview deployments, post-merge duties, branch protection.
-2. **Batch**: eligible PRs (not draft, no requested changes, required checks green, nothing outstanding) in a bisect-friendly order; everything else is deferred with a reason.
+2. **Batch**: eligible PRs (not draft, no requested changes, required checks green, nothing outstanding, no deferred work in their history, no migrations older than the base's) in a bisect-friendly order; everything else is deferred with a reason. Anything a PR asks the owner to check, such as user-facing copy, is quoted and confirmed with you once.
 3. **Merge** each PR head with `--no-ff` in a dedicated worktree. Mechanical conflicts are resolved, lockfiles and generated files regenerated; a conflict that needs judgment is resolved only when both intents are clear, otherwise that PR is deferred and the rest continue.
 4. **Gate once** on the combined commit. With a pre-push hook that reuses a verified tree, pushing the landing branch runs the gate and builds previews, and the push to the base then costs seconds.
-5. **On failure**: defer the PR that caused it and rebuild, or bisect when the cause is unclear.
-6. **Land** with a fast-forward push to the base, or one combined merge-commit PR when protection forbids direct pushes. Never `--no-verify`, never force-push.
-7. **Close out**: confirm each PR shows merged, close issues it names, run post-merge duties the docs assign to agents, and report what landed, what was deferred and why, every conflict resolution and the gate evidence.
+5. **On failure**: rerun infrastructure and known-flaky failures, defer the PR that caused a real one and rebuild, or bisect when the cause is unclear. The lander never writes fixes of its own.
+6. **Land**: recheck every PR and the base (a moved base means a rebuild and a fresh gate), check post-merge preconditions such as a hosted migration's backup, then fast-forward the base, or merge one combined merge-commit PR when protection forbids direct pushes. Never `--no-verify`, never force-push, never a host-side merge of an unverified combination.
+7. **Close out**: run post-merge duties right away, check what deployed, confirm each PR shows merged, close issues it names, and report what landed, what was deferred and why, every conflict resolution and the gate evidence.
 
 Each run keeps its ledger and landing worktree in `~/.land/runs/<repo>/<run-id>/`, so an interrupted run can resume.
 
