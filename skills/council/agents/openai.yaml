@@ -1,0 +1,5 @@
+interface:
+  display_name: "Council"
+  short_description: "Review a PR with a council of models and fix what is real"
+policy:
+  allow_implicit_invocation: false
