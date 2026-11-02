@@ -1,0 +1,5 @@
+interface:
+  display_name: "Implement"
+  short_description: "Orchestrate subagents through an issue or milestone, then open a PR"
+policy:
+  allow_implicit_invocation: false

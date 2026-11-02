@@ -86,6 +86,64 @@ npx skills add UltimateLad135/skills --skill land
 
 Each run keeps its ledger and landing worktree in `~/.land/runs/<repo>/<run-id>/`, so an interrupted run can resume.
 
+## `/implement`
+
+Implement one issue, or every child ticket of a parent spec or milestone, with one subagent per ticket, then open one PR and run `/council` on it.
+
+### Requirements
+
+Git, `gh`, and a host with subagents that can work in their own worktree (Claude Code's `Agent`, or T3 Code's `delegate_task`). The skill reads the gate and the hard rules every change must keep from the repository's `AGENTS.md`, `CLAUDE.md` and CI docs. Install `/council` too, or the run stops after the PR.
+
+### Install
+
+```bash
+npx skills add UltimateLad135/skills --skill implement
+npx skills add UltimateLad135/skills --skill council
+```
+
+### Use
+
+```text
+/implement 42                    one issue, or a parent spec's open sub-issues
+/implement milestone "Alpha 1"   every open issue in a milestone
+/orchestrate /implement 42       the same workflow with a team you pick
+```
+
+### How a run goes
+
+1. **Rules**: the gate, the hard rules, the readiness label and where the design docs live.
+2. **Scope**: read each issue and its parent spec. Issues that aren't marked ready, or are blocked by something outside the batch, are raised with you first.
+3. **Waves**: order the batch by its blockers. Each wave runs in parallel, one child per issue in its own worktree, branched from an `implement/<slug>` integration branch.
+4. **Review and merge**: the orchestrator reads each child's diff against the acceptance criteria and the hard rules, merges it with `--no-ff`, fixes findings itself in separate commits and runs the gate.
+5. **PR and council**: once every criterion is met and the gate is green, push, open one PR that closes the batch's issues (never the parent spec), and run `/council` on it.
+
+## `/council`
+
+Review a PR with a council of models from different providers. The agent you are talking to judges every finding against the code, fixes what is real and in scope, and posts the verdicts on the PR.
+
+### Requirements
+
+T3 Code with orchestration (`delegate_task`) and at least one reviewer provider. Edit the pool table in `SKILL.md` to match your providers; outside T3 Code the skill says so and stops.
+
+### Install
+
+```bash
+npx skills add UltimateLad135/skills --skill council
+```
+
+### Use
+
+```text
+/council 57    review PR #57
+```
+
+### How a run goes
+
+1. **Brief**: every reviewer gets the same brief: the PR, the head SHA, the closed issues' acceptance criteria and the repository's hard rules. They read only and report findings, each with a concrete failure.
+2. **Triage**: merge duplicates, verify each finding by reading and running the code, and mark it Fixed, Rejected (with why) or Deferred (real but out of scope). How many reviewers raised a finding is not evidence.
+3. **Fix**: one commit per finding on the PR branch, the gate once, push. One round only.
+4. **Post**: one PR comment with the verdict table, and the Deferred items in chat.
+
 ## License
 
 See [LICENSE](LICENSE).
