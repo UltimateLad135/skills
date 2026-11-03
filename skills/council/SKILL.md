@@ -38,8 +38,9 @@ Every reviewer gets the same brief, word for word:
 - what to look for, in this order:
   1. bugs and regressions in the changed code;
   2. breaches of the repository's hard rules, pasted in;
-  3. acceptance criteria that aren't met, or are "met" by tests that wouldn't fail without the change;
-  4. layer violations the docs forbid (for example presentation code mutating domain state), generated files edited by hand, missing required metadata;
+  3. when the diff crosses a trust boundary (a server endpoint or action, authentication or authorization, database access rules, money, stored files, secrets): what a lower-trust actor, such as another user or an anonymous visitor, can read or change that they shouldn't. Name the actor and the request;
+  4. acceptance criteria that aren't met, or are "met" by tests that wouldn't fail without the change;
+  5. layer violations the docs forbid (for example presentation code mutating domain state), generated files edited by hand, missing required metadata;
 - what not to report: style, naming taste, refactors outside the diff, new features. A design concern gets one line under "Out of scope" at the end;
 - the answer format, one block per finding. No finding without a concrete failure; "No findings" is a valid answer:
 
@@ -68,9 +69,9 @@ In scope means bugs, regressions, hard-rule breaches and unmet acceptance criter
 
 ## Fix
 
-Commit the fixes on the PR branch, one commit per finding or tight group, each message naming the finding. Run the gate.
+Commit the fixes on the PR branch, one commit per finding or tight group, each message naming the finding. Run the gate, then push. When a pre-push hook runs the gate, the push is that run: don't run it by hand first.
 
-Then push. One round only: don't run the council again on its own fixes. If a fix is big enough to deserve a second look, tell the user instead.
+One round only: don't run the council again on its own fixes. If a fix is big enough to deserve a second look, tell the user instead.
 
 ## Post
 
