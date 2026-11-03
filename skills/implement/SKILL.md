@@ -51,11 +51,11 @@ Models come in tiers: read [tiers.md](tiers.md) (or `~/.agents/tiers.md` when it
 
 Spread picks across providers when they are equal in value, so one model's habits don't run through the whole batch. Name each pick and one line of why in the plan and in the PR description. When a child fails the review or the gate in a way a stronger model would have avoided, rerun the issue once on a model from the next tier up, and note it in the PR.
 
-When `/orchestrate` wraps this skill, its team's worker model replaces these picks. Without T3 Code, only your own provider's models are available: pick from those with your host's subagent tool (Claude Code's `Agent` with its `model` parameter).
+Without T3 Code, only your own provider's models are available: pick from those with your host's subagent tool (Claude Code's `Agent` with its `model` parameter).
 
 ## Child brief
 
-One subagent per issue, each in its own worktree branched from the integration head: your host's subagent tool with worktree isolation (Claude Code's `Agent` with `isolation: "worktree"`, or T3 Code's `delegate_task` with `isolation: "worktree"`). When `/orchestrate` wraps this skill, its workers take this role. The brief is all the context the child has, so it contains:
+One subagent per issue, each in its own worktree branched from the integration head: your host's subagent tool with worktree isolation (Claude Code's `Agent` with `isolation: "worktree"`, or T3 Code's `delegate_task` with `isolation: "worktree"`). The brief is all the context the child has, so it contains:
 
 - the issue number and full body, plus the part of the parent spec it implements;
 - the design-doc sections that matter, by heading, and the files it will likely touch;
