@@ -8,19 +8,16 @@ disable-model-invocation: true
 
 Several models review the same PR independently. You are the judge: you check every finding against the code, fix the real ones that are in scope, push back on the rest, and post the verdicts on the PR.
 
-## Pool
+## Reviewers
 
-| Reviewer | Provider | Model | Option |
-|----------|----------|-------|--------|
-| Grok 4.7 | `grok` | `grok-4.7` | reasoningEffort `xhigh` |
-| Gemini 4 Argon | `antigravity` | `gemini-4-argon` | thinking_level `high` |
-| DeepSeek V4.1 Flash | `opencode` | `opencode-go/deepseek-v4.1-flash` | variant `max` |
-| Claude Opus 5.5 | `claudeAgent` | `claude-opus-5-5` | effort `high` |
-| GPT-6.1 Sol | `codex` | `gpt-6.1-sol` | reasoningEffort `xhigh` |
+Models come in tiers: read [tiers.md](tiers.md) (or `~/.agents/tiers.md` when it exists) for the models and the rules. The council is:
 
-This is the default pool. Edit the table to match the providers you have; the more providers it spans, the less the reviewers share blind spots.
+- every model in the **review** tier;
+- the first model in the **swarm** tier, for a cheap outside view.
 
-Call `orchestrator_capabilities` first. Some harnesses attach the T3 tools lazily: when they are missing from your tool list, make one direct call by name before concluding. Without them, tell the user that `/council` needs T3 Code orchestration and stop. Run every reviewer that is available, each through `delegate_task`, all at once. If one is missing, note which and why, and go on with the rest. Never swap in a model that isn't in the table. When a provider renames a model, update the table.
+The more providers the council spans, the less its reviewers share blind spots.
+
+Call `orchestrator_capabilities` first. Some harnesses attach the T3 tools lazily: when they are missing from your tool list, make one direct call by name before concluding. Without them, tell the user that `/council` needs T3 Code orchestration and stop. Run every reviewer that is available, each through `delegate_task`, all at once. If one is missing, note which and why, and go on with the rest.
 
 ## Before the reviewers
 

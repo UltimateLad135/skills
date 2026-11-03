@@ -31,7 +31,7 @@ Read each issue with `gh issue view <n> --comments`, and the spec under its `## 
 - An issue blocked by one that is neither closed nor in the batch: stop and ask.
 - Read only the design-doc sections the issues need.
 
-Post the plan (waves, one line per issue) and carry on without waiting.
+Post the plan (waves, one line per issue with its child's model) and carry on without waiting.
 
 ## Integration branch
 
@@ -40,6 +40,18 @@ Work on the current branch unless it is the default branch. In that case, create
 ## Waves
 
 Order the batch by its blockers (`## Blocked by`, or the repository's dependency links). Wave 1 is every issue with no blocker left in the batch, wave 2 is what wave 1 unblocks, and so on. Issues in one wave run in parallel. A wave starts only after the previous wave is merged and the gate is green.
+
+## Child models
+
+Models come in tiers: read [tiers.md](tiers.md) (or `~/.agents/tiers.md` when it exists) for the models and the rules. Pick the best-value model for each issue yourself, without asking: the cheapest one you expect to get it right the first time. Any model in the tiers file is allowed, and its reserve rules apply. As a guide:
+
+- **swarm** (DeepSeek V4.1 Flash first, then Gemini 3.8 Flash): small, fully specified issues in one area, such as copy, config, a simple component, or a test for existing behaviour.
+- **mid** (for example Sonnet, Terra): the usual feature or bug fix.
+- **review** (for example Opus, Sol): changes across several layers, concurrency, security or permissions, data migrations, money, or a subtle bug nobody has pinned down. Never give these a swarm-tier model.
+
+Spread picks across providers when they are equal in value, so one model's habits don't run through the whole batch. Name each pick and one line of why in the plan and in the PR description. When a child fails the review or the gate in a way a stronger model would have avoided, rerun the issue once on a model from the next tier up, and note it in the PR.
+
+When `/orchestrate` wraps this skill, its team's worker model replaces these picks. Without T3 Code, only your own provider's models are available: pick from those with your host's subagent tool (Claude Code's `Agent` with its `model` parameter).
 
 ## Child brief
 
@@ -76,7 +88,7 @@ Implements <parent spec or milestone link>.
 
 ## Issues
 
-- Closes #<n>: <what changed, one line>
+- Closes #<n>: <what changed, one line> (<model>: <why that model>)
 
 ## Review fixes
 

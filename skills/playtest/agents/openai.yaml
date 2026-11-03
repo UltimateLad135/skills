@@ -1,0 +1,5 @@
+interface:
+  display_name: "Playtest"
+  short_description: "Playtest a game or app with a swarm of agent testers and verify what they find"
+policy:
+  allow_implicit_invocation: false
