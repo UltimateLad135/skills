@@ -54,17 +54,18 @@ npx skills add UltimateLad135/skills --skill council
 ### Use
 
 ```text
+/implement                       pick from the ready issues with no open blocker
 /implement 42                    one issue, or a parent spec's open sub-issues
 /implement milestone "Alpha 1"   every open issue in a milestone
 ```
 
 ### How a run goes
 
-1. **Rules**: the gate, the hard rules, the readiness label and where the design docs live.
+1. **Rules**: the gate and the focused checks, the hard rules, the readiness label, where the design docs live, and the workflow duties (board moves, release notes, required PR sections).
 2. **Scope**: read each issue and its parent spec. Issues that aren't marked ready, or are blocked by something outside the batch, are raised with you first.
 3. **Waves**: order the batch by its blockers. Each wave runs in parallel, one child per issue in its own worktree, branched from an `implement/<slug>` integration branch.
-4. **Review and merge**: the orchestrator reads each child's diff against the acceptance criteria and the hard rules, merges it with `--no-ff`, fixes findings itself in separate commits and runs the gate.
-5. **PR and council**: once every criterion is met and the gate is green, push, open one PR that closes the batch's issues (never the parent spec), and run `/council` on it.
+4. **Review and merge**: the orchestrator reads each child's diff against the acceptance criteria and the hard rules, merges it with `--no-ff`, fixes findings itself in separate commits and runs the focused checks.
+5. **PR and council**: once every criterion is met, run the complete gate once (through the pre-push hook when there is one), push, open one PR that closes the batch's issues (never the parent spec), and run `/council` on it.
 
 ## `/council`
 
@@ -88,9 +89,9 @@ npx skills add UltimateLad135/skills --skill council
 
 ### How a run goes
 
-1. **Brief**: every reviewer gets the same brief: the PR, the head SHA, the closed issues' acceptance criteria and the repository's hard rules. They read only and report findings, each with a concrete failure.
+1. **Brief**: every reviewer gets the same brief: the PR, the head SHA, the closed issues' acceptance criteria and the repository's hard rules. When the diff crosses a trust boundary (endpoints, auth, database access rules, money, stored files), they also look for what a lower-trust actor can read or change. They read only and report findings, each with a concrete failure.
 2. **Triage**: merge duplicates, verify each finding by reading and running the code, and mark it Fixed, Rejected (with why) or Deferred (real but out of scope). How many reviewers raised a finding is not evidence.
-3. **Fix**: one commit per finding on the PR branch, the gate once, push. One round only.
+3. **Fix**: one commit per finding on the PR branch, the gate once (the pre-push hook, when there is one), push. One round only.
 4. **Post**: one PR comment with the verdict table, and the Deferred items in chat.
 
 ## `/playtest`
