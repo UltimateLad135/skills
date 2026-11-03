@@ -92,7 +92,7 @@ Implement one issue, or every child ticket of a parent spec or milestone, with o
 
 ### Requirements
 
-Git, `gh`, and a host with subagents that can work in their own worktree (Claude Code's `Agent`, or T3 Code's `delegate_task`). The skill reads the gate and the hard rules every change must keep from the repository's `AGENTS.md`, `CLAUDE.md` and CI docs. Install `/council` too, or the run stops after the PR.
+Git, `gh`, and a host with subagents that can work in their own worktree (Claude Code's `Agent`, or T3 Code's `delegate_task`). The skill reads the gate and the hard rules every change must keep from the repository's `AGENTS.md`, `CLAUDE.md` and CI docs. Install `/council` too, or the run stops after the PR. The orchestrator picks the best-value model for each issue itself, and names each pick and why in the plan and the PR, from [Model tiers](#model-tiers): a cheap model for a small, fully specified issue, a mid-tier one for the usual feature, a review-tier one for security, migrations or work across layers.
 
 ### Install
 
@@ -123,7 +123,7 @@ Review a PR with a council of models from different providers. The agent you are
 
 ### Requirements
 
-T3 Code with orchestration (`delegate_task`) and at least one reviewer provider. Edit the pool table in `SKILL.md` to match your providers; outside T3 Code the skill says so and stops.
+T3 Code with orchestration (`delegate_task`) and at least one reviewer provider; outside T3 Code the skill says so and stops. The council is every model in the review tier plus the first swarm-tier model (see [Model tiers](#model-tiers)).
 
 ### Install
 
@@ -143,6 +143,59 @@ npx skills add UltimateLad135/skills --skill council
 2. **Triage**: merge duplicates, verify each finding by reading and running the code, and mark it Fixed, Rejected (with why) or Deferred (real but out of scope). How many reviewers raised a finding is not evidence.
 3. **Fix**: one commit per finding on the PR branch, the gate once, push. One round only.
 4. **Post**: one PR comment with the verdict table, and the Deferred items in chat.
+
+## `/playtest`
+
+Playtest a game or an app with a swarm of agent testers, each in a different role, and get only the findings that survive independent verification.
+
+Cheap testers use the product the way real users would: a careful player, a min-maxer and a newcomer in a game; a daily user, a careless user and a keyboard-only user in an app. Each reports findings with evidence and a repro. Fresh verifiers try to refute every finding, and a model from another provider checks the high ones.
+
+The report holds what's confirmed, the design questions for you, and what was rejected and why. Testers run on the swarm tier, verifiers and the presentation tester on the review tier, the gap check on the mid tier (see [Model tiers](#model-tiers)). The report scores each tester model, so you can see which cheap models earn their place.
+
+### Requirements
+
+T3 Code with orchestration (`delegate_task`), and a harness through which an agent can use the product without a person: a headless game runner, or a headless browser such as `playwright-cli` against a local stack with a disposable account per tester. The models come from [Model tiers](#model-tiers); a repository's profile can change a job's tier.
+
+Each repository describes itself in `.playtest/profile.md` (its harness, isolation, canon, areas and roles) with hidden reference sessions in `.playtest/reference/`. `/playtest setup` drafts both from the repository's docs.
+
+### Install
+
+```bash
+npx skills add UltimateLad135/skills --skill playtest
+```
+
+### Use
+
+```text
+/playtest setup                  write the repository's profile and reference sessions
+/playtest                        full run, standard size
+/playtest quick the Quote flow   a focused run, one tester per role
+/playtest swarm                  two waves, the second aimed at the gaps
+/playtest recheck                rerun the last run's confirmed findings on this build
+```
+
+### How a run goes
+
+1. **Profile**: read `.playtest/profile.md` and its template (game or app).
+2. **Setup**: start the harness once, give every tester its own state, run the reference sessions, and plan coverage as role × area. Each swarm model plays one probe session first; a model that can't drive the harness sits the run out.
+3. **Testers**: one wave in parallel, blind to the internals until their first session is over. Claims that something can't be done must name two attempts, the arithmetic and the rule.
+4. **Merge**: group findings by root cause, drop ones a prior run already rejected, and check for coverage gaps; a swarm aims a second wave there.
+5. **Verify**: one fresh verifier per group tries to refute it: confirmed, needs-decision or rejected. High findings get a second model's check.
+6. **Report**: published as an artifact; issues only when you ask.
+
+Runs live in `.scratch/playtest/run-<N>/`, gitignored, so the next run skips what was already rejected and a recheck knows what to rerun.
+
+## Model tiers
+
+`/playtest`, `/council` and `/implement` pick models by tier, from `tiers.md` next to each skill (identical copies, since each skill installs on its own):
+
+| Tier | Models | Used for |
+|---|---|---|
+| **swarm**: cheap, run many | DeepSeek V4.1 Flash · max, Gemini 3.8 Flash · high; reserves: Claude Haiku 5.5 · max, GPT-6 Luna · max | playtest testers; council's outside view; implement children for small issues |
+| **mid**: smarter, a few at a time | Claude Sonnet 5.5 · high, GPT-6.1 Terra · high | playtest gap check; implement children for the usual issue |
+| **review**: strongest, spend carefully | Claude Opus 5.5 · high, GPT-6.1 Sol · xhigh, Gemini 4 Argon · high, Grok 4.7 · xhigh | council reviewers; playtest verifiers and presentation; implement children for hard issues |
+
+To use other models everywhere, copy `tiers.md` to `~/.agents/tiers.md` and edit it: it replaces every skill's copy. A missing model is skipped and its jobs spread over the rest of its tier; a job never moves down a tier. Reserves run only when the models above them are missing or failing: Haiku and Luna share usage limits with the bigger Claude and GPT models.
 
 ## License
 
