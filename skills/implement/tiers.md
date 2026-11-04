@@ -23,3 +23,11 @@ Shared by `/playtest`, `/council` and `/implement`. Each skill ships an identica
 - Models on your own provider may run as native subagents (Claude Code's `Agent` with its `model` parameter when you run on Claude). Every other model goes through `delegate_task`.
 - A missing model is skipped: say which, and spread its jobs over the rest of its tier. If a whole tier is missing, say so and use the next tier up. Never move a job down a tier, and never use a model that isn't in the table.
 - When a provider renames a model, update the table: every copy in the skills repository, or `~/.agents/tiers.md`.
+
+## Boost
+
+`boost` in the user's request means usage is plentiful: every job that names the swarm or mid tier runs on the review tier instead, under that job's own rules (how many models, round-robin, a different model or provider). A rerun that would move one tier up goes to another review-tier model.
+
+`boost <model>` (for example `boost opus`) pins one review-tier model: every job runs on it, except a seat that a rule says must use a different model or provider, which takes the next review-tier model that satisfies the rule.
+
+Boost changes which models run. The number of agents, the waves and the limits on how many run at once stay as the skill sets them. Say in the plan or the report that the run is boosted, and with which model if pinned. A skill whose job is a mix of tiers says so and keeps its mix.

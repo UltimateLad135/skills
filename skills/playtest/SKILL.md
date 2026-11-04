@@ -79,7 +79,7 @@ Record each agent's model in `run.json`.
 
 ### Harness probe
 
-Before the first wave, each swarm model the run will use (reserves only when they are needed) plays one short session in the harness, with a probe brief: reach the first decision point, show the evidence the profile asks for, and stop. A model that can't drive the harness or return valid JSON is left out of this run and noted in `run.json` and the report. A reserve takes over only when the models above it fail the probe. If no swarm model passes, testers move up to the mid tier and the budget shrinks to match; say so before going on.
+Before the first wave, each model the run will use for testers (reserves only when they are needed) plays one short session in the harness, with a probe brief: reach the first decision point, show the evidence the profile asks for, and stop. A model that can't drive the harness or return valid JSON is left out of this run and noted in `run.json` and the report. A reserve takes over only when the models above it fail the probe. If no swarm model passes, testers move up to the mid tier and the budget shrinks to match; say so before going on.
 
 ### Running them
 

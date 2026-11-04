@@ -51,6 +51,8 @@ Models come in tiers: read [tiers.md](tiers.md) (or `~/.agents/tiers.md` when it
 - **mid** (for example Sonnet, Terra): the usual feature or bug fix.
 - **review** (for example Opus, Sol): changes across several layers, concurrency, security or permissions, data migrations, money, or a subtle bug nobody has pinned down. Never give these a swarm-tier model.
 
+With `boost` in the request, every child runs on the review tier, under the tiers file's Boost rules; still name each pick.
+
 Spread picks across providers when they are equal in value, so one model's habits don't run through the whole batch. Name each pick and one line of why in the plan and in the PR description. When a child fails the review or the gate in a way a stronger model would have avoided, rerun the issue once on a model from the next tier up, and note it in the PR.
 
 Without T3 Code, only your own provider's models are available: pick from those with your host's subagent tool (Claude Code's `Agent` with its `model` parameter).
