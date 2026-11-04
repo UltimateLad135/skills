@@ -15,7 +15,7 @@ Models come in tiers: read [tiers.md](tiers.md) (or `~/.agents/tiers.md` when it
 - every model in the **review** tier;
 - the first model in the **swarm** tier, for a cheap outside view.
 
-The more providers the council spans, the less its reviewers share blind spots.
+The more providers the council spans, the less its reviewers share blind spots. A request that says `boost` leaves this mix as it is: the council already seats every review-tier model, and the swarm seat is there for an outside view.
 
 Call `orchestrator_capabilities` first. Some harnesses attach the T3 tools lazily: when they are missing from your tool list, make one direct call by name before concluding. Without them, tell the user that `/council` needs T3 Code orchestration and stop. Run every reviewer that is available, each through `delegate_task`, all at once. If one is missing, note which and why, and go on with the rest.
 

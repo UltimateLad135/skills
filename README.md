@@ -57,6 +57,7 @@ npx skills add UltimateLad135/skills --skill council
 /implement                       pick from the ready issues with no open blocker
 /implement 42                    one issue, or a parent spec's open sub-issues
 /implement milestone "Alpha 1"   every open issue in a milestone
+/implement 42 boost              every child on a review-tier model (see Boost)
 ```
 
 ### How a run goes
@@ -122,6 +123,7 @@ npx skills add UltimateLad135/skills --skill playtest
 /playtest quick the Quote flow   a focused run, one tester per role
 /playtest swarm                  two waves, the second aimed at the gaps
 /playtest recheck                rerun the last run's confirmed findings on this build
+/playtest boost opus             testers and gap check on Opus too (see Boost)
 ```
 
 ### How a run goes
@@ -146,6 +148,10 @@ Runs live in `.scratch/playtest/run-<N>/`, gitignored, so the next run skips wha
 | **review**: strongest, spend carefully | Claude Opus 5.5 · high, GPT-6.1 Sol · xhigh, Gemini 4 Argon · high, Grok 4.7 · xhigh | council reviewers; playtest verifiers and presentation; implement children for hard issues |
 
 To use other models everywhere, copy `tiers.md` to `~/.agents/tiers.md` and edit it: it replaces every skill's copy. A missing model is skipped and its jobs spread over the rest of its tier; a job never moves down a tier. Reserves run only when the models above them are missing or failing: Haiku and Luna share usage limits with the bigger Claude and GPT models.
+
+### Boost
+
+When a subscription has plenty of usage left, add `boost` to `/implement` or `/playtest`: every swarm and mid-tier job moves to the review tier, keeping its own rules, so a playtest's testers still alternate providers. `boost <model>` (for example `boost opus`) pins one review-tier model; seats that a rule says must use a different model or provider take the next review-tier model instead. The number of agents and how many run at once stay the same, and the plan or report says the run is boosted. `/council` ignores boost, since its point is a mix of providers.
 
 ## License
 
